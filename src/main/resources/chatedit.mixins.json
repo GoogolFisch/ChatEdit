@@ -1,0 +1,23 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "me.googol.chatEdit.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+  ],
+  "client": [
+    "AbsCommandBlockScreenMixin",
+    "BookScreenMixin",
+    "ChatCompMixin",
+    "ChatScreenMixin",
+    "CommandBlockScreenMixin",
+    "ScreenMixin",
+    "SignScreenMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "overwrites": {
+    "requireAnnotations": true
+  }
+}

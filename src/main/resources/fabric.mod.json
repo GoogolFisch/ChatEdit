@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "id": "chatedit",
+  "version": "${version}",
+  "name": "ChatEdit",
+  "description": "Ever feel like using a text-editor to view the chat?",
+  "authors": [],
+  "contact": {},
+  "license": "All-Rights-Reserved",
+  "icon": "assets/chatEdit/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "fabric-datagen": [
+      "me.googol.chatEdit.client.ChatEditDataGenerator"
+    ],
+    "client": [
+      "me.googol.chatEdit.client.ChatEditClient"
+    ],
+    "main": [
+      "me.googol.chatEdit.ChatEdit"
+    ]
+  },
+  "mixins": [
+    "chatedit.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "fabric-api": "*",
+    "minecraft": "${minecraft_version}"
+  }
+}
