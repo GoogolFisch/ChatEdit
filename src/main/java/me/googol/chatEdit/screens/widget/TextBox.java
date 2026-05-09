@@ -740,7 +740,10 @@ public class TextBox extends AbstractWidget {
         String s;
         //Rect getRect;
         if(compound.equals("\\2v")){
-            insertText(Minecraft.getInstance().keyboardHandler.getClipboard(),false);
+            s = Minecraft.getInstance().keyboardHandler.getClipboard();
+            insertText(s,false);
+            cursorX += s.length();
+            limitCursorX();
             //
             doClear = true;
             codep = 0;
@@ -975,7 +978,10 @@ public class TextBox extends AbstractWidget {
         }else {
             base = renderText.remove(ypos);
             xpos = Math.max(0, Math.min(cursorX, base.length()));
-            if(!reversePaste)xpos++;
+            if(!reversePaste){
+                xpos++;
+                xpos = Math.min(cursorX,base.length());
+            }
             bout = base.substring(0,xpos) + text + base.substring(xpos);
         }
         //
