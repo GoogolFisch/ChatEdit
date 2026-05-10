@@ -287,6 +287,7 @@ public class TextBox extends AbstractWidget {
                 if (iterX == -1) {
                     if(whiteLastSkip) {
                         iterY++;
+                        if(iterY >= renderText.size())break;
                         iterX = 0;
                         base = renderText.get(iterY);
                     }else{
@@ -686,12 +687,34 @@ public class TextBox extends AbstractWidget {
                 doClear = true;
                 break;
             case 'o':
-                selection.staX ^= selection.endX;
-                selection.endX ^= selection.staX;
-                selection.staX ^= selection.endX;
-                selection.staY ^= selection.endY;
-                selection.endY ^= selection.staY;
-                selection.staY ^= selection.endY;
+                int tmp;
+                if(state == VimState.Visual) {
+                    tmp = selection.endX;
+                    selection.endX = selection.staX;
+                    selection.staX = tmp;
+                    tmp = selection.endY;
+                    selection.endY = selection.staY;
+                    selection.staY = tmp;
+                    cursorX = selection.endX;
+                    cursorY = selection.endY;
+                }else{
+                    if(selection.endY < selection.posY) {
+                        selection.posY++;
+                    }
+                    tmp = selection.endY;
+                    selection.endY = selection.posY;
+                    selection.posY = tmp;
+                    selection.staY = tmp;
+                    cursorY = selection.endY;
+                    if(selection.endY > selection.posY)
+                        cursorY--;
+                    if(selection.endY < selection.posY) {
+                        selection.posY--;
+
+                    }
+                }
+                doClear = true;
+                break;
             case 'd':
             case 'c':
             case 'y':

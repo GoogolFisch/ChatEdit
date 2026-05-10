@@ -56,7 +56,6 @@ public abstract class SignScreenMixin implements SignScreenInterface {
             ts = new TextScreen(messages[line],mc.screen);
             ts.addRangeText(mc.gui.getChat().getRecentChat());
             ts.addText(messages[line]);
-            was_active = true;
             //ts.init
             mc.setScreen(ts);
             cir.setReturnValue(true);
@@ -74,7 +73,6 @@ public abstract class SignScreenMixin implements SignScreenInterface {
             } //  */
             //ts.addRangeText(mc.gui.getChat());
             ts.addText(messages[line]);
-            was_active = true;
             //ts.init
             mc.setScreen(ts);
             cir.setReturnValue(true);
@@ -85,6 +83,7 @@ public abstract class SignScreenMixin implements SignScreenInterface {
     @Override
     public void funnyBinds$setText(String text) {
         deferInsert = text;
+        was_active = true;
         //setMessage(text);
         //if(signField == null)return;
         //signField.setCursorToEnd(true);

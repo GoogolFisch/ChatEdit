@@ -58,6 +58,7 @@ public abstract class AbsCommandBlockScreenMixin implements CommandBlockScreenIn
             ts = new TextScreen(commandEdit.getValue(),mc.screen);
             ts.addRangeText(mc.gui.getChat().getRecentChat());
             ts.addText(commandEdit.getValue());
+            deferInsert = commandEdit.getValue();
             was_active = true;
             //ts.init
             mc.setScreen(ts);
@@ -76,6 +77,7 @@ public abstract class AbsCommandBlockScreenMixin implements CommandBlockScreenIn
             } //  */
             //ts.addRangeText(mc.gui.getChat());
             ts.addText(commandEdit.getValue());
+            deferInsert = commandEdit.getValue();
             was_active = true;
             //ts.init
             mc.setScreen(ts);
