@@ -1,5 +1,6 @@
 package me.googol.chatEdit.screens;
 
+import me.googol.chatEdit.inter.AnvilScreenInterface;
 import me.googol.chatEdit.inter.BookEditScreenInterface;
 import me.googol.chatEdit.inter.CommandBlockScreenInterface;
 import me.googol.chatEdit.inter.SignScreenInterface;
@@ -11,6 +12,7 @@ import net.minecraft.client.gui.screens.ChatScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractCommandBlockEditScreen;
 import net.minecraft.client.gui.screens.inventory.AbstractSignEditScreen;
+import net.minecraft.client.gui.screens.inventory.AnvilScreen;
 import net.minecraft.client.gui.screens.inventory.BookEditScreen;
 import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
@@ -47,17 +49,17 @@ public class TextScreen extends Screen {
             ChatScreen cs = (ChatScreen)lastScreen;
             cs.insertText(outp,true);
         }
-        if(lastScreen instanceof AbstractCommandBlockEditScreen){
-            AbstractCommandBlockEditScreen acbs = (AbstractCommandBlockEditScreen)lastScreen;
+        if(lastScreen instanceof AbstractCommandBlockEditScreen acbs){
             ((CommandBlockScreenInterface)acbs).funnyBinds$setText(outp);
         }
-        if(lastScreen instanceof AbstractSignEditScreen){
-            AbstractSignEditScreen ases = (AbstractSignEditScreen)lastScreen;
+        if(lastScreen instanceof AbstractSignEditScreen ases){
             ((SignScreenInterface)ases).funnyBinds$setText(outp);
         }
-        if(lastScreen instanceof BookEditScreen){
-            BookEditScreen bes = (BookEditScreen)lastScreen;
+        if(lastScreen instanceof BookEditScreen bes){
             ((BookEditScreenInterface)bes).funnyBinds$setText(outp);
+        }
+        if(lastScreen instanceof AnvilScreen as){
+            ((AnvilScreenInterface)as).funnyBinds$setText(outp);
         }
     }
     protected void init() {

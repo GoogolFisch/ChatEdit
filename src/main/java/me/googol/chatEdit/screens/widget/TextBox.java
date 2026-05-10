@@ -533,10 +533,12 @@ public class TextBox extends AbstractWidget {
         if(keyEvent.isDown()){
             cursorY = Math.min(renderText.size() - 1,cursorY + 1);return true;
         }
-        if(keyEvent.hasControlDown() && keyEvent.key() == GLFW.GLFW_KEY_U){compound += "\\2u";isDone = true;}
-        if(keyEvent.hasControlDown() && keyEvent.key() == GLFW.GLFW_KEY_D){compound += "\\2d";isDone = true;}
-        if(keyEvent.hasControlDown() && keyEvent.key() == GLFW.GLFW_KEY_C){compound += "\\2c";isDone = true;}
-        if(keyEvent.hasControlDown() && keyEvent.key() == GLFW.GLFW_KEY_V){compound += "\\2v";isDone = true;}
+        if(keyEvent.hasControlDown() && keyEvent.hasShiftDown() && keyEvent.key() == GLFW.GLFW_KEY_V){compound += "\\2V";isDone = true;}
+        else if(keyEvent.hasControlDown() && keyEvent.key() == GLFW.GLFW_KEY_U){compound += "\\2u";isDone = true;}
+        else if(keyEvent.hasControlDown() && keyEvent.key() == GLFW.GLFW_KEY_D){compound += "\\2d";isDone = true;}
+        else if(keyEvent.hasControlDown() && keyEvent.key() == GLFW.GLFW_KEY_C){compound += "\\2c";isDone = true;}
+        else if(keyEvent.hasControlDown() && keyEvent.key() == GLFW.GLFW_KEY_V){compound += "\\2v";isDone = true;}
+        //
         if(state == VimState.Normal) {
             if (keyEvent.key() == GLFW.GLFW_KEY_ESCAPE) {
                 parent.onClose();
@@ -584,6 +586,19 @@ public class TextBox extends AbstractWidget {
                 cursorX = Math.max(0,cursorX - 1);
                 return true;
             }
+            if(compound.equals("\\2v")){
+                String s = Minecraft.getInstance().keyboardHandler.getClipboard();
+                insertText(s,false);
+                cursorX += s.length();
+                limitCursorX();
+            }
+            if(compound.equals("\\2V")){
+                String s = Minecraft.getInstance().keyboardHandler.getClipboard();
+                insertChar(s);
+                cursorX += s.length();
+                limitCursorX();
+            }
+            compound = "";
         }
         if(state == VimState.Visual) {
             if (keyEvent.isConfirmation()) {
@@ -715,8 +730,15 @@ public class TextBox extends AbstractWidget {
                 }
                 doClear = true;
                 break;
-            case 'd':
             case 'c':
+                doClear = true;
+                state = VimState.Insert;
+                deleteText(selection);
+                cursorX = selection.staX;
+                cursorY = selection.staY;
+                resetSelection();
+                break;
+            case 'd':
             case 'y':
                 doClear = true;
                 state = VimState.Normal;
@@ -760,16 +782,25 @@ public class TextBox extends AbstractWidget {
         if(length == 0)return;
         char codep = compound.charAt(0);
         boolean doClear = false;
-        String s;
+        String s = "";
         //Rect getRect;
-        if(compound.equals("\\2v")){
-            s = Minecraft.getInstance().keyboardHandler.getClipboard();
-            insertText(s,false);
-            cursorX += s.length();
-            limitCursorX();
-            //
-            doClear = true;
-            codep = 0;
+        if(compound.startsWith("\\")){
+            // spacial stuff
+            if(compound.equals("\\2v")){
+                s = Minecraft.getInstance().keyboardHandler.getClipboard();
+                insertText(s,false);
+                doClear = true;
+            }
+            if(compound.equals("\\2V")) {
+                s = Minecraft.getInstance().keyboardHandler.getClipboard();
+                insertChar(s);
+                doClear = true;
+            }
+            if(doClear) {
+                cursorX += s.length();
+                limitCursorX();
+                codep = 0;
+            }
         }
         switch (codep) {
             case ':':
