@@ -728,6 +728,7 @@ public class TextBox extends AbstractWidget {
 
                     }
                 }
+                limitCursorY();
                 doClear = true;
                 break;
             case 'c':
@@ -737,6 +738,7 @@ public class TextBox extends AbstractWidget {
                 cursorX = selection.staX;
                 cursorY = selection.staY;
                 resetSelection();
+                limitCursorY();
                 break;
             case 'd':
             case 'y':
@@ -747,6 +749,7 @@ public class TextBox extends AbstractWidget {
                 cursorX = selection.staX;
                 cursorY = selection.staY;
                 resetSelection();
+                limitCursorY();
                 break;
             case 'v':
             case 'V':
@@ -921,6 +924,7 @@ public class TextBox extends AbstractWidget {
                 if(getRect == null)
                     break;
                 deleteText(getRect);
+                limitCursorY();
                 doClear = true;
                 break;
             case 'c':
@@ -931,6 +935,7 @@ public class TextBox extends AbstractWidget {
                 doClear = true;
                 cursorX = 0;
                 renderText.add(cursorY, "");
+                limitCursorY();
                 state = VimState.Insert;
                 break;
             case 'y':
@@ -996,6 +1001,13 @@ public class TextBox extends AbstractWidget {
         }*/
         if(maxY >= renderText.size()){
             maxY = renderText.size() - 1;
+            maxX = renderText.get(maxY).length();
+            minX--;
+            if(minX < 0){
+                minY--;
+                if(minY < 0)minY = 0;
+                minX = renderText.get(minY).length();
+            }
         }
 
         String s = renderText.get(minY);
