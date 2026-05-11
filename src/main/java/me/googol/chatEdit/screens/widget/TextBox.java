@@ -26,7 +26,7 @@ public class TextBox extends AbstractWidget {
     public enum VimState{
         Normal,Insert,Visual,VisualLines
     }
-    public class Rect {
+    public static class Rect {
         public int staX,staY;
         public int endX,endY;
         public int posX,posY;
@@ -36,45 +36,43 @@ public class TextBox extends AbstractWidget {
         }
         public Rect sort(){
             if(staY > endY || (staY == endY && staX > endX)){
-                return new Rect(endX,endY,staX,staY,posX,posY);
+                return new Rect(endX, endY, staX, staY, posX, posY);
             }
             return this;
         }
     }
+    ////
     public List<String> renderText;
     public Font font;
     public boolean doAccept = false;
     long focusedTime;
+    Rect selection = new Rect(0, 0, 0, 0, 0, 0);
     int cursorX,cursorY;
-    int selectX,selectY;
-    Rect selection = new Rect(0,0,0,0,0,0);
     int xStart,yStart = 0;
-    int xMax,yMax = 0;
-    int scroll = 0;
-    int linePer = 0;
+    int scroll,linePer;
     static String copied = "";
-    String compound;
-    String findNext;
+    String fileName,compound,findNext;
     Screen parent;
     VimState state;
     private final List<EditBox.TextFormatter> formatters;
+
     public TextBox(Screen parent,Font font,int sx, int sy, int wid, int hei, Component component) {
         super(sx, sy, wid, hei, component);
         this.state = VimState.Normal;
         this.font = font;
         compound = "";
         findNext = "";
+        fileName = "";
         this.parent = parent;
         renderText = new LinkedList<String>();
         this.formatters = new ArrayList<>();
         //
         cursorX = cursorY = -1;
-        selectX = selectY = -1;
         xStart = sx;
         focusedTime = 0;
         yStart = sy;
-        xMax = wid;
-        yMax = hei;
+        scroll = 0;
+        linePer = 0;
     }
 
     public boolean isVisible() {
@@ -119,7 +117,6 @@ public class TextBox extends AbstractWidget {
         int upperSelX = sorted.endX,upperSelY = sorted.endY;
         /*if(lowerSelY > upperSelY || (lowerSelY == upperSelY && lowerSelX > upperSelX)){
             lowerSelX = cursorX;lowerSelY = cursorY;
-            upperSelX = selectX;upperSelY = selectY;
         }*/
         for(int counter = 0;counter < linePer && idx < renderText.size();counter++){
             line = renderText.get(idx);
@@ -240,7 +237,7 @@ public class TextBox extends AbstractWidget {
     }
 
     private void resetSelection(){
-        selection = new Rect(cursorX,cursorY,cursorX,cursorY,cursorX,cursorY);
+        selection = new Rect(cursorX, cursorY, cursorX, cursorY, cursorX, cursorY);
     }
 
     public int moveFind(int offset, int start, char stop) {
@@ -343,10 +340,10 @@ public class TextBox extends AbstractWidget {
                         stY = 0;
                     }
                     if(stY == cursorY){
-                        return new Rect(cursorX,cursorY,cursorX,cursorY,cursorX,cursorY);
+                        return new Rect(cursorX, cursorY, cursorX, cursorY, cursorX, cursorY);
                     }
                 }
-                return new Rect(cursorX,cursorY,stX,stY,stX,stY);
+                return new Rect(cursorX, cursorY, stX, stY, stX, stY);
             case 'N':
                 while(stX == -1 || repeatCount > 0) {
                     stX = renderText.get(stY).lastIndexOf(findNext,stX - 1);
@@ -360,93 +357,93 @@ public class TextBox extends AbstractWidget {
                     }
                     stX = renderText.get(stY).length();
                     if(stY == cursorY){
-                        return new Rect(cursorX,cursorY,cursorX,cursorY,cursorX,cursorY);
+                        return new Rect(cursorX, cursorY, cursorX, cursorY, cursorX, cursorY);
                     }
                 }
-                return new Rect(cursorX,cursorY,stX,stY,stX,stY);
+                return new Rect(cursorX, cursorY, stX, stY, stX, stY);
             case ' ':
             case 'l':
                 saveState = Math.min(cursorX + repeatCount,saveState);
-                return new Rect(cursorX,cursorY,saveState,cursorY,saveState,cursorY);
+                return new Rect(cursorX, cursorY, saveState, cursorY, saveState, cursorY);
             case 'h':
                 saveState = Math.max(0,cursorX - repeatCount);
-                return new Rect(cursorX,cursorY,saveState,cursorY,saveState,cursorY);
+                return new Rect(cursorX, cursorY, saveState, cursorY, saveState, cursorY);
             case 'k':
                 saveState = Math.max(0,cursorY - repeatCount);
-                return new Rect(0,saveState,0,cursorY + 1,cursorX,saveState);
+                return new Rect(0, saveState, 0, cursorY + 1, cursorX, saveState);
             case 'j':
                 saveState = Math.min(renderText.size() - 1,cursorY + repeatCount);
-                return new Rect(0,cursorY,0,saveState + 1,cursorX,saveState);
-            case '0': return new Rect(0,cursorY,cursorX,cursorY,0,cursorY);
+                return new Rect(0, cursorY, 0, saveState + 1, cursorX, saveState);
+            case '0': return new Rect(0, cursorY, cursorX, cursorY, 0, cursorY);
             case '$':
-                return new Rect(cursorX,cursorY,saveState,cursorY,saveState,cursorY);
+                return new Rect(cursorX, cursorY, saveState, cursorY, saveState, cursorY);
             case '^':
                 String s = renderText.get(cursorY);
                 if(!s.isEmpty() && s.charAt(0) == ' ')
                     savePos = getWordPosition(1,0,cursorY,true,false);
                 else savePos = new Tuple<>(0,cursorY);
-                return new Rect(savePos.getA(),savePos.getB(),cursorX,cursorY,savePos.getA(),savePos.getB());
+                return new Rect(savePos.getA(), savePos.getB(), cursorX, cursorY, savePos.getA(), savePos.getB());
             case 'w':
                 savePos = getWordPosition(repeatCount,cursorX,cursorY,true,false);
-                return new Rect(cursorX,cursorY,savePos.getA(),savePos.getB(),savePos.getA(),savePos.getB());
+                return new Rect(cursorX, cursorY, savePos.getA(), savePos.getB(), savePos.getA(), savePos.getB());
             case 'W':
                 savePos = getWordPosition(repeatCount,cursorX,cursorY,true,true);
-                return new Rect(cursorX,cursorY,savePos.getA(),savePos.getB(),savePos.getA(),savePos.getB());
+                return new Rect(cursorX, cursorY, savePos.getA(), savePos.getB(), savePos.getA(), savePos.getB());
             case 'e':
                 savePos = getWordPosition(repeatCount,cursorX + 1,cursorY,false,false);
-                return new Rect(cursorX,cursorY,savePos.getA(),savePos.getB(),savePos.getA(),savePos.getB());
+                return new Rect(cursorX, cursorY, savePos.getA(), savePos.getB(), savePos.getA(), savePos.getB());
             case 'E':
                 savePos = getWordPosition(repeatCount,cursorX + 1,cursorY,false,true);
-                return new Rect(cursorX,cursorY,savePos.getA(),savePos.getB(),savePos.getA(),savePos.getB());
+                return new Rect(cursorX, cursorY, savePos.getA(), savePos.getB(), savePos.getA(), savePos.getB());
             case 'b':
                 savePos = getWordPosition(-repeatCount,cursorX,cursorY,true,false);
-                return new Rect(savePos.getA(),savePos.getB(),cursorX,cursorY,savePos.getA(),savePos.getB());
+                return new Rect(savePos.getA(), savePos.getB(), cursorX, cursorY, savePos.getA(), savePos.getB());
             case 'B':
                 savePos = getWordPosition(-repeatCount,cursorX,cursorY,true,true);
-                return new Rect(savePos.getA(),savePos.getB(),cursorX,cursorY,savePos.getA(),savePos.getB());
+                return new Rect(savePos.getA(), savePos.getB(), cursorX, cursorY, savePos.getA(), savePos.getB());
             case 't':
                 if(length < 2)return null;
                 saveState = moveFind(repeatCount,cursorX,data.charAt(1)) - 1;
-                return new Rect(cursorX,cursorY,saveState,cursorY,saveState,cursorY);
+                return new Rect(cursorX, cursorY, saveState, cursorY, saveState, cursorY);
             case 'T':
                 if(length < 2)return null;
                 saveState = moveFind(-repeatCount,cursorX,data.charAt(1)) + 1;
-                return new Rect(saveState,cursorY,cursorX,cursorY,saveState,cursorY);
+                return new Rect(saveState, cursorY, cursorX, cursorY, saveState, cursorY);
             case 'f':
                 if(length < 2)return null;
                 saveState = moveFind(repeatCount,cursorX,data.charAt(1));
-                return new Rect(cursorX,cursorY,saveState,cursorY,saveState,cursorY);
+                return new Rect(cursorX, cursorY, saveState, cursorY, saveState, cursorY);
             case 'F':
                 if(length < 2)return null;
                 saveState = moveFind(-repeatCount,cursorX,data.charAt(1));
-                return new Rect(saveState,cursorY,cursorX,cursorY,saveState,cursorY);
+                return new Rect(saveState, cursorY, cursorX, cursorY, saveState, cursorY);
             case 'G':
                 saveState = renderText.size() - 1;
                 int savedX = renderText.get(saveState).length();
-                return new Rect(cursorX,cursorY,savedX,saveState,savedX,saveState);
+                return new Rect(cursorX, cursorY, savedX, saveState, savedX, saveState);
             case 'g':
                 if(length < 2)return null;
                 if(compound.charAt(1) == 'g'){
-                    return new Rect(0,0,cursorX,cursorY,0,0);
+                    return new Rect(0, 0, cursorX, cursorY, 0, 0);
                 }
-                return new Rect(saveState,cursorY,cursorX,cursorY,saveState,cursorY);
+                return new Rect(saveState, cursorY, cursorX, cursorY, saveState, cursorY);
             case '\\':
                 if(length < 3)break;
                 if(compound.charAt(1) == '2'){
                     if(compound.charAt(2) == 'd'){
                         saveState = Math.min(renderText.size() - 1,cursorY + (linePer / 2) * repeatCount);
-                        return new Rect(0,cursorY,0,saveState + 1,cursorX,saveState);
+                        return new Rect(0, cursorY, 0, saveState + 1, cursorX, saveState);
                     }
                     if(compound.charAt(2) == 'u'){
                         saveState = Math.max(0,cursorY - (linePer / 2) * repeatCount);
-                        return new Rect(0,cursorY,0,saveState + 1,cursorX,saveState);
+                        return new Rect(0, cursorY, 0, saveState + 1, cursorX, saveState);
                     }
                 }
                 break;
             case '%':
                 return moveInBlock();
         }
-        return new Rect(0,cursorY,0,cursorY + 1,cursorX,cursorY + 1);
+        return new Rect(0, cursorY, 0, cursorY + 1, cursorX, cursorY + 1);
     }
     public Rect moveInBlock(){
         char dow = 0;
@@ -467,7 +464,7 @@ public class TextBox extends AbstractWidget {
             //
         }
         if(dow == 0)
-            return new Rect(cursorX,cursorY,cursorX,cursorY,cursorX,cursorY);
+            return new Rect(cursorX, cursorY, cursorX, cursorY, cursorX, cursorY);
         if(dow == '(' || dow == '[' || dow == '{'){
             do{
                 if(posX >= here.length()){
@@ -501,8 +498,8 @@ public class TextBox extends AbstractWidget {
         }
 
         if(depth != 0)
-            return new Rect(cursorX,cursorY,cursorX,cursorY,cursorX,cursorY);
-        return new Rect(cursorX,cursorY,posX,posY,posX,posY);
+            return new Rect(cursorX, cursorY, cursorX, cursorY, cursorX, cursorY);
+        return new Rect(cursorX, cursorY, posX, posY, posX, posY);
     }
     public void limitCursorX(){
         if(cursorX < 0)
@@ -582,7 +579,7 @@ public class TextBox extends AbstractWidget {
                 return true;
             }
             if(keyEvent.key() == GLFW.GLFW_KEY_BACKSPACE){
-                deleteText(new Rect(cursorX - 1,cursorY,cursorX,cursorY,cursorX,cursorY));
+                deleteText(new Rect(cursorX - 1, cursorY, cursorX, cursorY, cursorX, cursorY));
                 cursorX = Math.max(0,cursorX - 1);
                 return true;
             }
@@ -605,7 +602,7 @@ public class TextBox extends AbstractWidget {
                 return true;
             }
             if(keyEvent.key() == GLFW.GLFW_KEY_BACKSPACE){
-                deleteText(new Rect(cursorX - 1,cursorY,cursorX,cursorY,cursorX,cursorY));
+                deleteText(new Rect(cursorX - 1, cursorY, cursorX, cursorY, cursorX, cursorY));
                 cursorX = Math.max(0,cursorX - 1);
                 return true;
             }
@@ -841,7 +838,7 @@ public class TextBox extends AbstractWidget {
                 break;
             case 'V':
                 state = VimState.VisualLines;
-                selection = new Rect(0,cursorY,renderText.get(cursorY).length(),cursorY,cursorX,cursorY);
+                selection = new Rect(0, cursorY, renderText.get(cursorY).length(), cursorY, cursorX, cursorY);
                 doClear = true;
                 break;
             // movement
@@ -959,9 +956,6 @@ public class TextBox extends AbstractWidget {
         }
         if(doClear)
             compound = "";
-        /*
-        selectX = cursorX;
-        selectY = cursorY;// */
         return;
     }
     public String rawSelectedString(Rect rect){
@@ -1099,13 +1093,14 @@ public class TextBox extends AbstractWidget {
             cursorY = getRect.posY;
             return;
         }
+        if(op == ':'){
+
+        }
     }
     public void appendText(String text){
         renderText.add(text);
         cursorY = renderText.size() - 1;
         cursorX = renderText.get(cursorY).length();
-        selectX = cursorX;
-        selectY = cursorY;
     }
     public void appendTexts(List<String> texts){
         renderText.addAll(texts);
@@ -1113,7 +1108,5 @@ public class TextBox extends AbstractWidget {
         if(cursorY >= 0)
             cursorX = renderText.get(cursorY).length();
         else{cursorX = 0;}
-        selectX = cursorX;
-        selectY = cursorY;
     }
 }
