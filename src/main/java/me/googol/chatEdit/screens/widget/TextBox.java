@@ -737,8 +737,8 @@ public class TextBox extends AbstractWidget {
                 deleteText(selection);
                 cursorX = selection.staX;
                 cursorY = selection.staY;
-                resetSelection();
                 limitCursorY();
+                resetSelection();
                 break;
             case 'd':
             case 'y':
@@ -748,8 +748,8 @@ public class TextBox extends AbstractWidget {
                 selection = selection.sort();
                 cursorX = selection.staX;
                 cursorY = selection.staY;
-                resetSelection();
                 limitCursorY();
+                resetSelection();
                 break;
             case 'v':
             case 'V':
