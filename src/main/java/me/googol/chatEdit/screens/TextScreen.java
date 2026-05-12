@@ -39,6 +39,8 @@ public class TextScreen extends Screen {
         this.initial = string;
         lastScreen = parent;
         deferAppendBox = null;
+        box = null;
+        cmd = null;
     }
     public void onClose() {
         this.minecraft.setScreen(this.lastScreen);
@@ -76,11 +78,13 @@ public class TextScreen extends Screen {
         this.cmd.addFormatter(this::formatChat);
         this.cmd.setCanLoseFocus(true);
         this.addRenderableWidget(this.cmd);
-        this.box = new TextBox(this,minecraft.fontFilterFishy, 4,4,this.width - 8, this.height - font.lineHeight * 2,Component.empty());
-        //this.box.appendText("Hello");
-        this.addRenderableWidget(this.box);
-        if(deferAppendBox != null){
-            box.appendTexts(deferAppendBox);
+        if(box == null) {
+            this.box = new TextBox(this, minecraft.fontFilterFishy, 4, 4, this.width - 8, this.height - font.lineHeight * 2, Component.empty());
+            //this.box.appendText("Hello");
+            this.addRenderableWidget(this.box);
+            if (deferAppendBox != null) {
+                box.appendTexts(deferAppendBox);
+            }
         }
         setFocused(box);
         /*
@@ -178,5 +182,29 @@ public class TextScreen extends Screen {
         this.doAcceptInput = doAcc;
         if(box != null)
             box.doAccept = doAcc;
+    }
+
+    public void execEditorCommand(String cmdString){
+        String args;
+        if(cmdString.startsWith(":ed ")){
+            TextBox tb = new TextBox(this,this.font,4,4,width - 8,this.height - font.lineHeight * 2,Component.empty());
+            args = cmdString.substring(4);
+            tb.setFileName(args);
+
+            this.removeWidget(this.box);
+            setMessage("File: " + args);
+            this.box = tb;
+            this.addRenderableWidget(this.box);
+            setFocused(tb);
+        }else if(cmdString.startsWith(":pwd")){
+            setMessage("pwd: " + System.getProperty("user.dir"));
+        }else if(cmdString.startsWith(":q")){
+            onClose();
+        }else if(cmdString.startsWith(":w")){
+            this.box.saveFile();
+        }
+    }
+    public void setMessage(String msg){
+        this.cmd.setValue(msg);
     }
 }

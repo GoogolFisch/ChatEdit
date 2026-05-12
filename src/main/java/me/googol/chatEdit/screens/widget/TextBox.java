@@ -1,5 +1,6 @@
 package me.googol.chatEdit.screens.widget;
 
+import me.googol.chatEdit.client.ChatEditClient;
 import me.googol.chatEdit.screens.TextScreen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -13,16 +14,28 @@ import net.minecraft.client.input.KeyEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
 import net.minecraft.util.FormattedCharSequence;
+import net.minecraft.util.StringUtil;
 import net.minecraft.util.Tuple;
 import net.minecraft.util.Util;
+import org.apache.commons.lang3.StringUtils;
 import org.lwjgl.glfw.GLFW;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 
 public class TextBox extends AbstractWidget {
+
+
     public enum VimState{
         Normal,Insert,
         Visual,VisualLines,
@@ -53,9 +66,9 @@ public class TextBox extends AbstractWidget {
     int xStart,yStart = 0;
     int scroll,linePer;
     static String copied = "";
-    String fileName,compound,findNext;
-    Screen parent;
-    VimState state;
+    public String fileName,compound,findNext;
+    public Screen parent;
+    public VimState state;
     private final List<EditBox.TextFormatter> formatters;
 
     public TextBox(Screen parent,Font font,int sx, int sy, int wid, int hei, Component component) {
@@ -1060,9 +1073,7 @@ public class TextBox extends AbstractWidget {
     }
 
     @Override
-    protected void updateWidgetNarration(NarrationElementOutput narrationElementOutput) {
-
-    }
+    protected void updateWidgetNarration(NarrationElementOutput narrationElementOutput) {}
     public void passIntoCommand(String cmd){
         if(cmd.length() < 2){return;}
         char op = cmd.charAt(0);
@@ -1077,7 +1088,8 @@ public class TextBox extends AbstractWidget {
             return;
         }
         if(op == ':'){
-
+            if(parent instanceof TextScreen ts)
+                ts.execEditorCommand(cmd);
         }
     }
     public void appendText(String text){
@@ -1091,5 +1103,27 @@ public class TextBox extends AbstractWidget {
         if(cursorY >= 0)
             cursorX = renderText.get(cursorY).length();
         else{cursorX = 0;}
+    }
+    public void setFileName(String fName) {
+        doAccept = false;
+        fileName = fName;
+        try {
+            renderText.addAll(Files.readAllLines(Path.of(fName), StandardCharsets.UTF_8));
+        } catch (IOException e) {
+            renderText.add("");
+        }
+        cursorX = cursorY = 0;
+    }
+    public void saveFile() {
+        Path fptr = Path.of(fileName);
+        try {
+            var bytes = StringUtils.join(renderText,'\n').getBytes();
+            Files.write(fptr, bytes);
+            if(parent instanceof TextScreen ts){
+                ts.setMessage("File " + fileName + " " + bytes.length);
+            }
+        } catch (IOException e) {
+            ChatEditClient.LOGGER.error("FileException{}\n{}", e.getMessage(), e.toString());
+        }
     }
 }
