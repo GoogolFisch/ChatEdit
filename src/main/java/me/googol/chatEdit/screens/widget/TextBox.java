@@ -24,7 +24,9 @@ import java.util.Objects;
 
 public class TextBox extends AbstractWidget {
     public enum VimState{
-        Normal,Insert,Visual,VisualLines
+        Normal,Insert,
+        Visual,VisualLines,
+        Replace,ReplaceContinue,
     }
     public static class Rect {
         public int staX,staY;
@@ -90,11 +92,11 @@ public class TextBox extends AbstractWidget {
         int lnCursor = -1;
         int cursorColor = 0xffaaccff;
         int textColor = 0xffffeeaa;
-        if(state == VimState.Insert){
-            cursorColor = 0xffffbbbb;
-        }else if(state == VimState.Visual){
-            cursorColor = 0xffbbffaa;
-        }
+        //
+        if     (state == VimState.Insert         ){cursorColor = 0xffffbbbb;}
+        else if(state == VimState.Visual         ){cursorColor = 0xffbbffaa;}
+        else if(state == VimState.Replace        ){cursorColor = 0xffffAA00;}
+        else if(state == VimState.ReplaceContinue){cursorColor = 0xffffFF00;}
         //
         //int linePer = guiGraphics.guiHeight() / font.lineHeight;
         linePer = height / font.lineHeight;
@@ -168,52 +170,6 @@ public class TextBox extends AbstractWidget {
         }
         if(!didDraw)
             scroll++;
-        /*
-        for(int idx = scroll;idx < Math.min(renderText.size(),scroll + linePer);){
-            line = renderText.get(idx);
-            if(idx == cursorY)lnCursor = cursorX;
-
-            int saveStateX = 0;
-            int renderCh = 0;
-            while(renderCh < line.length()){
-                String renderStr = this.font.plainSubstrByWidth(line.substring(renderCh), width - 20);
-                guiGraphics.drawString(this.font, this.applyFormat(renderStr, lnCursor - 1), xIter, yIter, textColor, true);
-                idx++;
-                xIter = xStart;
-                yIter++;
-                renderCh += renderStr.length();
-            }
-            if(lnCursor != -1){
-                if(lnCursor >= line.length())
-                    lnCursor = line.length();
-                String inj = line.substring(0,lnCursor);
-                guiGraphics.drawString(this.font, this.applyFormat(inj, lnCursor - 1), xIter, yIter, textColor, true);
-                xIter += this.font.width(inj);
-                saveStateX = xIter;
-                inj = line.substring(lnCursor);
-                guiGraphics.drawString(this.font, this.applyFormat(inj, lnCursor - 1), xIter, yIter, textColor, true);
-                xIter += this.font.width(inj);
-            }else {
-                guiGraphics.drawString(this.font, this.applyFormat(line, lnCursor - 1), xIter, yIter, textColor, true);
-                xIter += this.font.width(line);
-            }//
-            //
-            if(lnCursor != -1 && blink){
-                if (this.cursorX != line.length()) {
-                    int var18 = yIter - 1;
-                    int var19 = saveStateX + 1;
-                    int var20 = yIter + 1;
-                    Objects.requireNonNull(this.font);
-                    guiGraphics.fill(saveStateX, var18, var19, var20 + 9, cursorColor);
-                } else {
-                    guiGraphics.drawString(this.font, "_", xIter, yIter, cursorColor, true);
-                }
-            }
-            yIter += font.lineHeight;
-            //m += this.font.width(formattedCharSequence) + 1;
-            xIter = xStart;
-            lnCursor = -1;
-        }//* */
 
     }
     public void setFocused(boolean foc){
@@ -647,6 +603,22 @@ public class TextBox extends AbstractWidget {
                 return true;
             }
         }
+        if(state == VimState.Replace || state == VimState.ReplaceContinue){
+            if (characterEvent.isAllowedChatCharacter()) {
+                int preX = cursorX;
+                if(cursorX < renderText.get(cursorY).length())
+                    deleteText(new Rect(cursorX,cursorY,cursorX + 1,cursorY,cursorX + 1,cursorY));
+                insertChar(characterEvent.codepointAsString());
+                if(state == VimState.Replace){
+                    cursorX = preX;
+                    state = VimState.Normal;
+                }
+                return true;
+            }
+            if(state == VimState.Replace){
+                state = VimState.Normal;
+            }
+        }
         return false;
     }
 
@@ -810,6 +782,14 @@ public class TextBox extends AbstractWidget {
                     doClear = true;
                     break;
                 }
+                break;
+            case 'r':
+                state = VimState.Replace;
+                doClear = true;
+                break;
+            case 'R':
+                state = VimState.ReplaceContinue;
+                doClear = true;
                 break;
             case 'i':
                 state = VimState.Insert;
