@@ -96,7 +96,8 @@ public class TextBox extends AbstractWidget {
         if     (state == VimState.Insert         ){cursorColor = 0xffffbbbb;}
         else if(state == VimState.Visual         ){cursorColor = 0xffbbffaa;}
         else if(state == VimState.Replace        ){cursorColor = 0xffffAA00;}
-        else if(state == VimState.ReplaceContinue){cursorColor = 0xffffFF00;}
+        else if(state == VimState.ReplaceContinue){cursorColor = 0xffffff00;}
+        // else if(state ==  ){cursorColor = 0xffaa88ff;} // reserve
         //
         //int linePer = guiGraphics.guiHeight() / font.lineHeight;
         linePer = height / font.lineHeight;
@@ -226,12 +227,13 @@ public class TextBox extends AbstractWidget {
 
         String base = renderText.get(iterY);
         for(int counter = 0; counter < wskipCount; ++counter) {
-            if(iterY > renderText.size()) break;
+            if(iterY >= renderText.size()) break;
             //
             if (!dir) {
                 int length = base.length();
                 if(!whiteLastSkip && iterX > length) {
                     iterY++;
+                    if(iterY >= renderText.size())break;
                     iterX = 0;
                     base = renderText.get(iterY);
                     length = base.length();
@@ -840,6 +842,7 @@ public class TextBox extends AbstractWidget {
                     break;
                 cursorX = getRect.posX;
                 cursorY = getRect.posY;
+                limitCursorY();
                 doClear = true;
                 break;
             case 'o':
