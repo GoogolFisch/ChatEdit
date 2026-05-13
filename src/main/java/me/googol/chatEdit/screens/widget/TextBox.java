@@ -514,7 +514,7 @@ public class TextBox extends AbstractWidget {
                 return true;
             }
             if(keyEvent.isConfirmation()){
-                if(parent instanceof TextScreen tsp && !doAccept) {
+                if(parent instanceof TextScreen tsp && doAccept) {
                     if(renderText.size() <= cursorY)
                         tsp.onCloseAccept("");
                     else
@@ -995,6 +995,7 @@ public class TextBox extends AbstractWidget {
             highX = rect.staX;
             lowX = rect.endX;
         }*/
+        if(minY < 0)minY = 0;
         if(maxY >= renderText.size()){
             maxY = renderText.size() - 1;
             maxX = renderText.get(maxY).length();
@@ -1094,7 +1095,11 @@ public class TextBox extends AbstractWidget {
             return;
         }
         if(op == ':'){
-            if(parent instanceof TextScreen ts)
+            if(StringUtils.isNumeric(cmd.substring(1))){
+                cursorY = Integer.parseUnsignedInt(cmd.substring(1)) - 1;
+                limitCursorY();
+            }
+            else if(parent instanceof TextScreen ts)
                 ts.execEditorCommand(cmd);
         }
     }
@@ -1124,6 +1129,7 @@ public class TextBox extends AbstractWidget {
         Path fptr = Path.of(fileName);
         try {
             var bytes = StringUtils.join(renderText,'\n').getBytes();
+            //Files.createFile(fptr);
             Files.write(fptr, bytes);
             if(parent instanceof TextScreen ts){
                 ts.setMessage("File " + fileName + " " + bytes.length);

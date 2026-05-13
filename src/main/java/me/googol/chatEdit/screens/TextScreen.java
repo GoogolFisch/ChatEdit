@@ -1,10 +1,12 @@
 package me.googol.chatEdit.screens;
 
+import com.mojang.authlib.minecraft.client.MinecraftClient;
 import me.googol.chatEdit.inter.AnvilScreenInterface;
 import me.googol.chatEdit.inter.BookEditScreenInterface;
 import me.googol.chatEdit.inter.CommandBlockScreenInterface;
 import me.googol.chatEdit.inter.SignScreenInterface;
 import me.googol.chatEdit.screens.widget.TextBox;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.EditBox;
@@ -19,11 +21,15 @@ import net.minecraft.client.input.KeyEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.util.FormattedCharSequence;
+import net.minecraft.world.entity.vehicle.minecart.Minecart;
+import net.minecraft.world.level.storage.LevelResource;
 import org.jspecify.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 public class TextScreen extends Screen {
     protected String initial;
@@ -32,6 +38,10 @@ public class TextScreen extends Screen {
     protected TextBox box;
     boolean doAcceptInput;
     private List<String> deferAppendBox;
+    public static Map<String,String> cmdVars = new HashMap<>();
+    static {
+        cmdVars.put("","");
+    }
     public AbstractWidget focusText;
     public TextScreen(String string, Screen parent) {
         super(Component.translatable("chat_screen.title"));
@@ -41,6 +51,14 @@ public class TextScreen extends Screen {
         deferAppendBox = null;
         box = null;
         cmd = null;
+        if(Minecraft.getInstance().getSingleplayerServer() != null) {
+            //String worldName = "";
+            cmdVars.put("save", Minecraft.getInstance().getSingleplayerServer().getWorldPath(LevelResource.ROOT).toString());
+            cmdVars.put("datapack",Minecraft.getInstance().getSingleplayerServer().getWorldPath(LevelResource.DATAPACK_DIR).toString());
+        }else{
+            cmdVars.put("save","");
+            cmdVars.put("datapack","");
+        }
     }
     public void onClose() {
         this.minecraft.setScreen(this.lastScreen);
@@ -184,18 +202,55 @@ public class TextScreen extends Screen {
             box.doAccept = doAcc;
     }
 
+    public String remapFileName(String original){
+        StringBuilder outp = new StringBuilder();
+        int state = 0;
+        int oldIdx = 0;
+        int idx = 0;
+        for(idx = 0;idx < original.length();idx++){
+            char ch = original.charAt(idx);
+            if(state == 0 && ch == '\\') {
+                state = 1;
+                outp.append(original, oldIdx, idx);
+                oldIdx = idx + 1;
+            }
+            else if(state == 1){state = 0;}
+            else if(state == 0 && ch == '$') {
+                outp.append(original, oldIdx, idx);
+                oldIdx = idx + 1;
+                state = 2;
+            }
+            else if(state == 2 && (ch >= 'A' && ch <= 'Z' || ch >= 'a' && ch <= 'z' || ch == '_')){}
+            else if(state == 2){
+                String fetched = cmdVars.get(original.substring(oldIdx,idx));
+                if(fetched != null)
+                    outp.append(fetched);
+                oldIdx = idx;
+                state = 0;
+            }
+
+        }
+        if(state == 2){
+            String fetched = cmdVars.get(original.substring(oldIdx,idx));
+            if(fetched != null)
+                outp.append(fetched);
+        }else if(state == 0) outp.append(original, oldIdx, idx);
+        return outp.toString();
+    }
     public void execEditorCommand(String cmdString){
         String args;
         if(cmdString.startsWith(":ed ")){
             TextBox tb = new TextBox(this,this.font,4,4,width - 8,this.height - font.lineHeight * 2,Component.empty());
             args = cmdString.substring(4);
-            tb.setFileName(args);
+            tb.setFileName(remapFileName(args));
 
             this.removeWidget(this.box);
             setMessage("File: " + args);
             this.box = tb;
             this.addRenderableWidget(this.box);
             setFocused(tb);
+        }else if(cmdString.startsWith(":echo ")){
+            setMessage(remapFileName(cmdString.substring(6)));
         }else if(cmdString.startsWith(":pwd")){
             setMessage("pwd: " + System.getProperty("user.dir"));
         }else if(cmdString.startsWith(":q")){
