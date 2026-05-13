@@ -78,6 +78,7 @@ public class TextBox extends AbstractWidget {
         compound = "";
         findNext = "";
         fileName = "";
+        doAccept = true;
         this.parent = parent;
         renderText = new LinkedList<String>();
         this.formatters = new ArrayList<>();
@@ -541,7 +542,12 @@ public class TextBox extends AbstractWidget {
         }
         if(state == VimState.Insert) {
             if (keyEvent.isConfirmation()) {
-                if (parent instanceof TextScreen tsp && !doAccept) {
+                if(!doAccept) {
+                    cursorY++;
+                    renderText.add(cursorY,"");
+                    cursorX = 0;
+                }
+                if (parent instanceof TextScreen tsp && doAccept) {
                     if (renderText.size() <= cursorY)
                         tsp.onCloseAccept("");
                     else
